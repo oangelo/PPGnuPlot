@@ -1,12 +1,12 @@
 # neste template de Makefile so muda a lista
 # dos SOURCES e o nome do EXECUTABLE.
 
-CC = g++
-CFLAGS = -c -Wall  -std=c++11 
-LDFLAGS = -lgtest -lgsl -lgslcblas -lm -lpthread
-SOURCES =  src/main.cpp  src/ppgnuplot.cpp
-OBJECTS = $(SOURCES:.cpp=.o)
-EXECUTABLE = ppgnuplot 
+CC=g++
+CFLAGS=-c -Wall -std=c++0x  
+LDFLAGS=-lgtest -lgsl -lgslcblas -lm -lpthread
+SOURCES= unit_test/tests.cpp src/ppgnuplot.cpp
+OBJECTS=$(SOURCES:.cpp=.o)
+EXECUTABLE=tests
 
 
 all: $(SOURCES) $(EXECUTABLE)

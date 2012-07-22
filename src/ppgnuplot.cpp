@@ -51,7 +51,13 @@
                             Function codes
  ---------------------------------------------------------------------------*/
 
+PPGnuPlot::PPGnuPlot(): pstyle("points"), my_handle(gnuplot_init()){
+       
+}
 
+PPGnuPlot::~PPGnuPlot(){
+    gnuplot_close(my_handle);
+}
 /*-------------------------------------------------------------------------*/
 /**
   @brief	Find out where a command lives in your PATH.
@@ -81,7 +87,7 @@
   
  */
 /*-------------------------------------------------------------------------*/
-char * gnuplot_get_program_path(const char * pname)
+char * PPGnuPlot::gnuplot_get_program_path(const char * pname)
 {
     int         i, j, lg;
     char    *   path;
@@ -142,9 +148,8 @@ char * gnuplot_get_program_path(const char * pname)
  */
 /*--------------------------------------------------------------------------*/
 
-gnuplot_ctrl * gnuplot_init(void)
-{
-    gnuplot_ctrl *  handle ;
+gnuplot_ctrl * PPGnuPlot::gnuplot_init(void){
+    gnuplot_ctrl*  handle = NULL;
 
     if (getenv("DISPLAY") == NULL) {
         fprintf(stderr, "cannot find DISPLAY variable: is it set?\n") ;
@@ -157,10 +162,10 @@ gnuplot_ctrl * gnuplot_init(void)
     /* 
      * Structure initialization:
      */
-    handle = (gnuplot_ctrl*)malloc(sizeof(gnuplot_ctrl)) ;
+    handle = new gnuplot_ctrl;
     handle->nplots = 0 ;
-    gnuplot_setstyle(handle, "points") ;
     handle->ntmp = 0 ;
+    //gnuplot_setstyle("points");
 
     handle->gnucmd = popen("gnuplot", "w") ;
     if (handle->gnucmd == NULL) {
@@ -185,7 +190,7 @@ gnuplot_ctrl * gnuplot_init(void)
  */
 /*--------------------------------------------------------------------------*/
 
-void gnuplot_close(gnuplot_ctrl * handle)
+void PPGnuPlot::gnuplot_close(gnuplot_ctrl * handle)
 {
     int     i ;
 	
@@ -198,8 +203,7 @@ void gnuplot_close(gnuplot_ctrl * handle)
             remove(handle->to_delete[i]) ;
         }
     }
-    free(handle) ;
-    return ;
+    delete handle;
 }
 
 
@@ -228,8 +232,9 @@ void gnuplot_close(gnuplot_ctrl * handle)
  */
 /*--------------------------------------------------------------------------*/
 
-void gnuplot_cmd(gnuplot_ctrl *  handle, const char *  cmd, ...)
-{
+void PPGnuPlot::gnuplot_cmd(const char *  cmd, ...)
+{   
+    gnuplot_ctrl * handle = my_handle;
     va_list ap ;
     char    local_cmd[GP_CMD_SIZE];
 
@@ -267,23 +272,24 @@ void gnuplot_cmd(gnuplot_ctrl *  handle, const char *  cmd, ...)
  */
 /*--------------------------------------------------------------------------*/
 
-void gnuplot_setstyle(gnuplot_ctrl * h, const char * plot_style) 
+void PPGnuPlot::gnuplot_setstyle(std::string plot_style) 
 {
-    if (strcmp(plot_style, "lines") &&
-        strcmp(plot_style, "points") &&
-        strcmp(plot_style, "linespoints") &&
-        strcmp(plot_style, "impulses") &&
-        strcmp(plot_style, "dots") &&
-        strcmp(plot_style, "steps") &&
-        strcmp(plot_style, "errorbars") &&
-        strcmp(plot_style, "boxes") &&
-        strcmp(plot_style, "boxerrorbars")) {
+    
+    if ((plot_style != "lines") &&
+        (plot_style != "points") &&
+        (plot_style != "linespoints") &&
+        (plot_style != "impulses") &&
+        (plot_style != "dots") &&
+        (plot_style != "steps") &&
+        (plot_style != "errorbars") &&
+        (plot_style != "boxes") &&
+        (plot_style != "boxerrorbars")) {
         fprintf(stderr, "warning: unknown requested style: using points\n") ;
-        strcpy(h->pstyle, "points") ;
+        pstyle = "points" ;
     } else {
-        strcpy(h->pstyle, plot_style) ;
+        pstyle = plot_style;
     }
-    return ;
+    
 }
 
 
@@ -298,12 +304,12 @@ void gnuplot_setstyle(gnuplot_ctrl * h, const char * plot_style)
  */
 /*--------------------------------------------------------------------------*/
 
-void gnuplot_set_xlabel(gnuplot_ctrl * h, const char * label)
+void PPGnuPlot::gnuplot_set_xlabel(const char * label)
 {
     char    cmd[GP_CMD_SIZE] ;
 
     sprintf(cmd, "set xlabel \"%s\"", label) ;
-    gnuplot_cmd(h, cmd) ;
+    gnuplot_cmd(cmd) ;
     return ;
 }
 
@@ -319,12 +325,12 @@ void gnuplot_set_xlabel(gnuplot_ctrl * h, const char * label)
  */
 /*--------------------------------------------------------------------------*/
 
-void gnuplot_set_ylabel(gnuplot_ctrl * h, const char * label)
+void PPGnuPlot::gnuplot_set_ylabel(const char * label)
 {
     char    cmd[GP_CMD_SIZE] ;
 
     sprintf(cmd, "set ylabel \"%s\"", label) ;
-    gnuplot_cmd(h, cmd) ;
+    gnuplot_cmd(cmd) ;
     return ;
 }
 
@@ -340,8 +346,9 @@ void gnuplot_set_ylabel(gnuplot_ctrl * h, const char * label)
  */
 /*--------------------------------------------------------------------------*/
 
-void gnuplot_resetplot(gnuplot_ctrl * h)
+void PPGnuPlot::gnuplot_resetplot()
 {
+    gnuplot_ctrl * h = my_handle;
     int     i ;
     if (h->ntmp) {
         for (i=0 ; i<h->ntmp ; i++) {
@@ -386,13 +393,13 @@ void gnuplot_resetplot(gnuplot_ctrl * h)
  */
 /*--------------------------------------------------------------------------*/
 
-void gnuplot_plot_x(
-    gnuplot_ctrl    *   handle,
+void PPGnuPlot::gnuplot_plot_x(
     double          *   d,
     int                 n,
     char            *   title
 )
 {
+    gnuplot_ctrl    *   handle = my_handle;
     int     i ;
 	int		tmpfd ;
     char    name[128] ;
@@ -435,14 +442,14 @@ void gnuplot_plot_x(
     }
     
     if (title == NULL) {
-        sprintf(line, "%s \"%s\" with %s", cmd, name, handle->pstyle) ;
+        sprintf(line, "%s \"%s\" with %s", cmd, name, pstyle.c_str()) ;
     } else {
         sprintf(line, "%s \"%s\" title \"%s\" with %s", cmd, name,
-                      title, handle->pstyle) ;
+                      title, pstyle.c_str()) ;
     }
 
     /* send command to gnuplot  */
-    gnuplot_cmd(handle, line) ;
+    gnuplot_cmd(line) ;
     handle->nplots++ ;
     return ;
 }
@@ -481,14 +488,14 @@ void gnuplot_plot_x(
  */
 /*--------------------------------------------------------------------------*/
 
-void gnuplot_plot_xy(
-    gnuplot_ctrl    *   handle,
+void PPGnuPlot::gnuplot_plot_xy(
 	double			*	x,
 	double			*	y,
     int                 n,
     char            *   title
 )
 {
+    gnuplot_ctrl    *   handle = my_handle;
     int     i ;
 	int		tmpfd ;
     char    name[128] ;
@@ -530,14 +537,14 @@ void gnuplot_plot_xy(
     }
     
     if (title == NULL) {
-        sprintf(line, "%s \"%s\" with %s", cmd, name, handle->pstyle) ;
+        sprintf(line, "%s \"%s\" with %s", cmd, name, pstyle.c_str());
     } else {
         sprintf(line, "%s \"%s\" title \"%s\" with %s", cmd, name,
-                      title, handle->pstyle) ;
+                      title, pstyle.c_str()) ;
     }
 
     /* send command to gnuplot  */
-    gnuplot_cmd(handle, line) ;
+    gnuplot_cmd(line) ;
     handle->nplots++ ;
     return ;
 }
@@ -565,7 +572,7 @@ void gnuplot_plot_xy(
  */
 /*--------------------------------------------------------------------------*/
 
-void gnuplot_plot_once(
+void PPGnuPlot::gnuplot_plot_once(
 	char	*	title,
 	char	*	style,
 	char	*	label_x,
@@ -581,24 +588,24 @@ void gnuplot_plot_once(
 
 	if ((handle = gnuplot_init()) == NULL) return ;
 	if (style!=NULL) {
-		gnuplot_setstyle(handle, style);
+		gnuplot_setstyle(style);
 	} else {
-		gnuplot_setstyle(handle, "lines");
+		gnuplot_setstyle("lines");
 	}
 	if (label_x!=NULL) {
-		gnuplot_set_xlabel(handle, label_x);
+		gnuplot_set_xlabel(label_x);
 	} else {
-		gnuplot_set_xlabel(handle, "X");
+		gnuplot_set_xlabel("X");
 	}
 	if (label_y!=NULL) {
-		gnuplot_set_ylabel(handle, label_y);
+		gnuplot_set_ylabel(label_y);
 	} else {
-		gnuplot_set_ylabel(handle, "Y");
+		gnuplot_set_ylabel("Y");
 	}
 	if (y==NULL) {
-		gnuplot_plot_x(handle, x, n, title);
+		gnuplot_plot_x(x, n, title);
 	} else {
-		gnuplot_plot_xy(handle, x, y, n, title);
+		gnuplot_plot_xy(x, y, n, title);
 	}
 	printf("press ENTER to continue\n");
 	while (getchar()!='\n') {}
@@ -636,13 +643,13 @@ void gnuplot_plot_once(
 /*--------------------------------------------------------------------------*/
     
 
-void gnuplot_plot_slope(
-    gnuplot_ctrl    *   handle,
+void PPGnuPlot::gnuplot_plot_slope(
     double              a,
     double              b,
     char            *   title
 )
 {
+    gnuplot_ctrl    *   handle = my_handle;
     char    stitle[GP_TITLE_SIZE] ;
     char    cmd[GP_CMD_SIZE] ;
 
@@ -654,12 +661,12 @@ void gnuplot_plot_slope(
 
     if (handle->nplots > 0) {
         sprintf(cmd, "replot %g * x + %g title \"%s\" with %s",
-                      a, b, title, handle->pstyle) ;
+                      a, b, title, pstyle.c_str()) ;
     } else {
         sprintf(cmd, "plot %g * x + %g title \"%s\" with %s",
-                      a, b, title, handle->pstyle) ;
+                      a, b, title, pstyle.c_str()) ;
     }
-    gnuplot_cmd(handle, cmd) ;
+    gnuplot_cmd(cmd) ;
     handle->nplots++ ;
     return ;
 }
@@ -690,12 +697,12 @@ void gnuplot_plot_slope(
  */
 /*--------------------------------------------------------------------------*/
 
-void gnuplot_plot_equation(
-    gnuplot_ctrl    *   h,
+void PPGnuPlot::gnuplot_plot_equation(
     char            *   equation,
     char            *   title
 )
 {
+    gnuplot_ctrl    *   h = my_handle;
     char    cmd[GP_CMD_SIZE];
     char    plot_str[GP_EQ_SIZE] ;
     char    title_str[GP_TITLE_SIZE] ;
@@ -712,10 +719,9 @@ void gnuplot_plot_equation(
     }
 
     sprintf(cmd, "%s %s title \"%s\" with %s", 
-                  plot_str, equation, title_str, h->pstyle) ;
-    gnuplot_cmd(h, cmd) ;
+                  plot_str, equation, title_str, pstyle.c_str()) ;
+    gnuplot_cmd(cmd) ;
     h->nplots++ ;
     return ;
 }
 
-/* vim: set ts=4 et sw=4 tw=75 */
