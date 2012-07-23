@@ -2,7 +2,7 @@
 
 /*-------------------------------------------------------------------------*/
 /**
-  @file		gnuplot_i.c
+  @file		i.c
   @author	N. Devillard
   @date	Sep 1998
   @version	$Revision: 2.10 $
@@ -17,7 +17,7 @@
 /*--------------------------------------------------------------------------*/
 
 /*
-	$Id: gnuplot_i.c,v 2.10 2003/01/27 08:58:04 ndevilla Exp $
+	$Id: i.c,v 2.10 2003/01/27 08:58:04 ndevilla Exp $
 	$Author: ndevilla $
 	$Date: 2003/01/27 08:58:04 $
 	$Revision: 2.10 $
@@ -51,12 +51,12 @@
                             Function codes
  ---------------------------------------------------------------------------*/
 
-PPGnuPlot::PPGnuPlot(): pstyle("points"), my_handle(gnuplot_init()){
+PPGnuPlot::PPGnuPlot(): pstyle("points"), my_handle(init()){
        
 }
 
 PPGnuPlot::~PPGnuPlot(){
-    gnuplot_close(my_handle);
+    finish(my_handle);
 }
 /*-------------------------------------------------------------------------*/
 /**
@@ -79,15 +79,15 @@ PPGnuPlot::~PPGnuPlot(){
   Examples (assuming there is a prog named 'hello' in the cwd):
 
   @verbatim
-  gnuplot_get_program_path("hello") returns "."
-  gnuplot_get_program_path("ls") returns "/bin"
-  gnuplot_get_program_path("csh") returns "/usr/bin"
-  gnuplot_get_program_path("/bin/ls") returns NULL
+  get_program_path("hello") returns "."
+  get_program_path("ls") returns "/bin"
+  get_program_path("csh") returns "/usr/bin"
+  get_program_path("/bin/ls") returns NULL
   @endverbatim
   
  */
 /*-------------------------------------------------------------------------*/
-char * PPGnuPlot::gnuplot_get_program_path(const char * pname)
+char * PPGnuPlot::get_program_path(const char * pname)
 {
     int         i, j, lg;
     char    *   path;
@@ -144,17 +144,17 @@ char * PPGnuPlot::gnuplot_get_program_path(const char * pname)
   controlling a gnuplot session should remain opaque and only be
   accessed through the provided functions.
 
-  The session must be closed using gnuplot_close().
+  The session must be closed using finish().
  */
 /*--------------------------------------------------------------------------*/
 
-gnuplot_ctrl * PPGnuPlot::gnuplot_init(void){
-    gnuplot_ctrl*  handle = NULL;
+ctrl * PPGnuPlot::init(void){
+    ctrl*  handle = NULL;
 
     if (getenv("DISPLAY") == NULL) {
         fprintf(stderr, "cannot find DISPLAY variable: is it set?\n") ;
     }
-	if (gnuplot_get_program_path("gnuplot")==NULL) {
+	if (get_program_path("gnuplot")==NULL) {
 		fprintf(stderr, "cannot find gnuplot in your PATH");
 		return NULL ;
 	}
@@ -162,10 +162,10 @@ gnuplot_ctrl * PPGnuPlot::gnuplot_init(void){
     /* 
      * Structure initialization:
      */
-    handle = new gnuplot_ctrl;
+    handle = new ctrl;
     handle->nplots = 0 ;
     handle->ntmp = 0 ;
-    //gnuplot_setstyle("points");
+    //setstyle("points");
 
     handle->gnucmd = popen("gnuplot", "w") ;
     if (handle->gnucmd == NULL) {
@@ -179,7 +179,7 @@ gnuplot_ctrl * PPGnuPlot::gnuplot_init(void){
 
 /*-------------------------------------------------------------------------*/
 /**
-  @brief	Closes a gnuplot session previously opened by gnuplot_init()
+  @brief	Closes a gnuplot session previously opened by init()
   @param	handle Gnuplot session control handle.
   @return	void
 
@@ -190,7 +190,7 @@ gnuplot_ctrl * PPGnuPlot::gnuplot_init(void){
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::gnuplot_close(gnuplot_ctrl * handle)
+void PPGnuPlot::finish(ctrl * handle)
 {
     int     i ;
 	
@@ -221,8 +221,8 @@ void PPGnuPlot::gnuplot_close(gnuplot_ctrl * handle)
   Examples:
 
   @code
-  gnuplot_cmd(g, "plot %d*x", 23.0);
-  gnuplot_cmd(g, "plot %g * cos(%g * x)", 32.0, -3.0);
+  Command(g, "plot %d*x", 23.0);
+  Command(g, "plot %g * cos(%g * x)", 32.0, -3.0);
   @endcode
 
   Since the communication to the gnuplot process is run through
@@ -232,9 +232,9 @@ void PPGnuPlot::gnuplot_close(gnuplot_ctrl * handle)
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::gnuplot_cmd(const char *  cmd, ...)
+void PPGnuPlot::Command(const char *  cmd, ...)
 {   
-    gnuplot_ctrl * handle = my_handle;
+    ctrl * handle = my_handle;
     va_list ap ;
     char    local_cmd[GP_CMD_SIZE];
 
@@ -272,7 +272,7 @@ void PPGnuPlot::gnuplot_cmd(const char *  cmd, ...)
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::gnuplot_setstyle(std::string plot_style) 
+void PPGnuPlot::setstyle(std::string plot_style) 
 {
     
     if ((plot_style != "lines") &&
@@ -304,12 +304,12 @@ void PPGnuPlot::gnuplot_setstyle(std::string plot_style)
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::gnuplot_set_xlabel(const char * label)
+void PPGnuPlot::set_xlabel(const char * label)
 {
     char    cmd[GP_CMD_SIZE] ;
 
     sprintf(cmd, "set xlabel \"%s\"", label) ;
-    gnuplot_cmd(cmd) ;
+    Command(cmd) ;
     return ;
 }
 
@@ -325,12 +325,12 @@ void PPGnuPlot::gnuplot_set_xlabel(const char * label)
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::gnuplot_set_ylabel(const char * label)
+void PPGnuPlot::set_ylabel(const char * label)
 {
     char    cmd[GP_CMD_SIZE] ;
 
     sprintf(cmd, "set ylabel \"%s\"", label) ;
-    gnuplot_cmd(cmd) ;
+    Command(cmd) ;
     return ;
 }
 
@@ -346,9 +346,9 @@ void PPGnuPlot::gnuplot_set_ylabel(const char * label)
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::gnuplot_resetplot()
+void PPGnuPlot::resetplot()
 {
-    gnuplot_ctrl * h = my_handle;
+    ctrl * h = my_handle;
     int     i ;
     if (h->ntmp) {
         for (i=0 ; i<h->ntmp ; i++) {
@@ -378,28 +378,28 @@ void PPGnuPlot::gnuplot_resetplot()
   Example:
 
   @code
-    gnuplot_ctrl    *h ;
+    ctrl    *h ;
     double          d[50] ;
     int             i ;
 
-    h = gnuplot_init() ;
+    h = init() ;
     for (i=0 ; i<50 ; i++) {
         d[i] = (double)(i*i) ;
     }
-    gnuplot_plot_x(h, d, 50, "parabola") ;
+    plot_x(h, d, 50, "parabola") ;
     sleep(2) ;
-    gnuplot_close(h) ;
+    finish(h) ;
   @endcode
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::gnuplot_plot_x(
+void PPGnuPlot::plot_x(
     double          *   d,
     int                 n,
     char            *   title
 )
 {
-    gnuplot_ctrl    *   handle = my_handle;
+    ctrl    *   handle = my_handle;
     int     i ;
 	int		tmpfd ;
     char    name[128] ;
@@ -449,7 +449,7 @@ void PPGnuPlot::gnuplot_plot_x(
     }
 
     /* send command to gnuplot  */
-    gnuplot_cmd(line) ;
+    Command(line) ;
     handle->nplots++ ;
     return ;
 }
@@ -471,31 +471,31 @@ void PPGnuPlot::gnuplot_plot_x(
   contain the same number of values.
 
   @code
-    gnuplot_ctrl    *h ;
+    ctrl    *h ;
 	double			x[50] ;
 	double			y[50] ;
     int             i ;
 
-    h = gnuplot_init() ;
+    h = init() ;
     for (i=0 ; i<50 ; i++) {
         x[i] = (double)(i)/10.0 ;
         y[i] = x[i] * x[i] ;
     }
-    gnuplot_plot_xy(h, x, y, 50, "parabola") ;
+    plot_xy(h, x, y, 50, "parabola") ;
     sleep(2) ;
-    gnuplot_close(h) ;
+    finish(h) ;
   @endcode
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::gnuplot_plot_xy(
+void PPGnuPlot::plot_xy(
 	double			*	x,
 	double			*	y,
     int                 n,
     char            *   title
 )
 {
-    gnuplot_ctrl    *   handle = my_handle;
+    ctrl    *   handle = my_handle;
     int     i ;
 	int		tmpfd ;
     char    name[128] ;
@@ -544,7 +544,7 @@ void PPGnuPlot::gnuplot_plot_xy(
     }
 
     /* send command to gnuplot  */
-    gnuplot_cmd(line) ;
+    Command(line) ;
     handle->nplots++ ;
     return ;
 }
@@ -572,7 +572,7 @@ void PPGnuPlot::gnuplot_plot_xy(
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::gnuplot_plot_once(
+void PPGnuPlot::plot_once(
 	char	*	title,
 	char	*	style,
 	char	*	label_x,
@@ -582,34 +582,34 @@ void PPGnuPlot::gnuplot_plot_once(
 	int			n
 )
 {
-	gnuplot_ctrl	*	handle ;
+	ctrl	*	handle ;
 
 	if (x==NULL || n<1) return ;
 
-	if ((handle = gnuplot_init()) == NULL) return ;
+	if ((handle = init()) == NULL) return ;
 	if (style!=NULL) {
-		gnuplot_setstyle(style);
+		setstyle(style);
 	} else {
-		gnuplot_setstyle("lines");
+		setstyle("lines");
 	}
 	if (label_x!=NULL) {
-		gnuplot_set_xlabel(label_x);
+		set_xlabel(label_x);
 	} else {
-		gnuplot_set_xlabel("X");
+		set_xlabel("X");
 	}
 	if (label_y!=NULL) {
-		gnuplot_set_ylabel(label_y);
+		set_ylabel(label_y);
 	} else {
-		gnuplot_set_ylabel("Y");
+		set_ylabel("Y");
 	}
 	if (y==NULL) {
-		gnuplot_plot_x(x, n, title);
+		plot_x(x, n, title);
 	} else {
-		gnuplot_plot_xy(x, y, n, title);
+		plot_xy(x, y, n, title);
 	}
 	printf("press ENTER to continue\n");
 	while (getchar()!='\n') {}
-	gnuplot_close(handle);
+	finish(handle);
 	return ;
 }
 
@@ -631,25 +631,25 @@ void PPGnuPlot::gnuplot_plot_once(
   Example:
 
   @code
-    gnuplot_ctrl    *   h ;
+    ctrl    *   h ;
     double              a, b ;
 
-    h = gnuplot_init() ;
-    gnuplot_plot_slope(h, 1.0, 0.0, "unity slope") ;
+    h = init() ;
+    plot_slope(h, 1.0, 0.0, "unity slope") ;
     sleep(2) ;
-    gnuplot_close(h) ;
+    finish(h) ;
   @endcode
  */
 /*--------------------------------------------------------------------------*/
     
 
-void PPGnuPlot::gnuplot_plot_slope(
+void PPGnuPlot::plot_slope(
     double              a,
     double              b,
     char            *   title
 )
 {
-    gnuplot_ctrl    *   handle = my_handle;
+    ctrl    *   handle = my_handle;
     char    stitle[GP_TITLE_SIZE] ;
     char    cmd[GP_CMD_SIZE] ;
 
@@ -666,7 +666,7 @@ void PPGnuPlot::gnuplot_plot_slope(
         sprintf(cmd, "plot %g * x + %g title \"%s\" with %s",
                       a, b, title, pstyle.c_str()) ;
     }
-    gnuplot_cmd(cmd) ;
+    Command(cmd) ;
     handle->nplots++ ;
     return ;
 }
@@ -686,23 +686,23 @@ void PPGnuPlot::gnuplot_plot_slope(
   Example:
 
   @code
-        gnuplot_ctrl    *h ;
+        ctrl    *h ;
         char            eq[80] ;
 
-        h = gnuplot_init() ;
+        h = init() ;
         strcpy(eq, "sin(x) * cos(2*x)") ;
-        gnuplot_plot_equation(h, eq, "sine wave", normal) ;
-        gnuplot_close(h) ;
+        plot_equation(h, eq, "sine wave", normal) ;
+        finish(h) ;
   @endcode
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::gnuplot_plot_equation(
+void PPGnuPlot::Equation(
     char            *   equation,
     char            *   title
 )
 {
-    gnuplot_ctrl    *   h = my_handle;
+    ctrl    *   h = my_handle;
     char    cmd[GP_CMD_SIZE];
     char    plot_str[GP_EQ_SIZE] ;
     char    title_str[GP_TITLE_SIZE] ;
@@ -720,8 +720,16 @@ void PPGnuPlot::gnuplot_plot_equation(
 
     sprintf(cmd, "%s %s title \"%s\" with %s", 
                   plot_str, equation, title_str, pstyle.c_str()) ;
-    gnuplot_cmd(cmd) ;
+    Command(cmd) ;
     h->nplots++ ;
-    return ;
+
+
+}
+
+void PPGnuPlot::Wait(){
+    char enter;
+    do {
+        std::cin.get(enter);
+    } while ( enter != '\n' );
 }
 

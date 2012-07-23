@@ -4,7 +4,8 @@
 
 TEST(PPGnuPlot, plot){
  PPGnuPlot plot;
- plot.gnuplot_plot_equation("x","my graph");
+ plot.Equation("sin(x)","Sin(x)");
+ plot.Wait();
 } 
 
 int main(int argc, char *argv[])

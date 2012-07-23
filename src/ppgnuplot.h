@@ -1,7 +1,8 @@
-#ifndef _PPGnuPlot_
-#define _PPGnuPlot_
+#ifndef _PP
+#define _PP
 
 #include <string>
+#include <iostream>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +17,7 @@
 #define GP_TMP_NAME_SIZE    512
 
 
-typedef struct _GNUPLOT_CTRL_ {
+typedef struct _CTRL_ {
     /** Pipe to gnuplot process */
     FILE    * gnucmd ;
 
@@ -28,35 +29,26 @@ typedef struct _GNUPLOT_CTRL_ {
     char      to_delete[GP_MAX_TMP_FILES][GP_TMP_NAME_SIZE] ;
     /** Number of temporary files */
     int       ntmp ;
-} gnuplot_ctrl ;
+} ctrl ;
 
 /********************* base class for PPGnuPlot*************************/
 class PPGnuPlot{
     public:
         PPGnuPlot();
-        
         ~PPGnuPlot();
 
-        void gnuplot_cmd(const char *  cmd, ...);
-
-        void gnuplot_setstyle(std::string plot_style);
-
-        void gnuplot_set_xlabel(const  char * label);
-
-        void gnuplot_set_ylabel(const char * label);
-
-        void gnuplot_resetplot();
-
-        void gnuplot_plot_x(double * d, int n, char * title);
-
-        void gnuplot_plot_xy(
+        void setstyle(std::string plot_style);
+        void set_xlabel(const  char * label);
+        void set_ylabel(const char * label);
+        void resetplot();
+        void plot_x(double * d, int n, char * title);
+        void plot_xy(
                 double * x,
                 double * y,
                 int n,
                 char * title
                 ) ;
-
-        void gnuplot_plot_once(
+        void plot_once(
                 char    *   title,
                 char    *   style,
                 char    *   label_x,
@@ -65,23 +57,21 @@ class PPGnuPlot{
                 double  *   y,
                 int         n
                 );
-
-        void gnuplot_plot_slope(
+        void plot_slope(
                 double              a,
                 double              b,
                 char            *   title
                 ) ;
-
-        void gnuplot_plot_equation(char * equation, char * title) ;
-
-
+        void Equation(char * equation, char * title) ;
+        void Wait();
     private:
         std::string pstyle;
-        gnuplot_ctrl* my_handle;
+        ctrl* my_handle;
 
-        char * gnuplot_get_program_path(const char * pname);
-        gnuplot_ctrl * gnuplot_init(void);
-        void gnuplot_close(gnuplot_ctrl * handle);
+        char * get_program_path(const char * pname);
+        ctrl * init(void);
+        void finish(ctrl * handle);
+        void Command(const char *  cmd, ...);
 };
 
 
