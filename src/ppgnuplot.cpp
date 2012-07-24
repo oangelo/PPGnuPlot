@@ -28,23 +28,14 @@
  ---------------------------------------------------------------------------*/
 
 #include "ppgnuplot.h"
+#ifndef P_tmpdir
+#define P_tmpdir "."
+
 
 /*---------------------------------------------------------------------------
                                 Defines
  ---------------------------------------------------------------------------*/
 
-/** Maximal size of a gnuplot command */
-#define GP_CMD_SIZE     	2048
-/** Maximal size of a plot title */
-#define GP_TITLE_SIZE   	80
-/** Maximal size for an equation */
-#define GP_EQ_SIZE      	512
-/** Maximal size of a name in the PATH */
-#define PATH_MAXNAMESZ       4096
-
-/** Define P_tmpdir if not defined (this is normally a POSIX symbol) */
-#ifndef P_tmpdir
-#define P_tmpdir "."
 #endif
 
 /*---------------------------------------------------------------------------
@@ -58,6 +49,66 @@ PPGnuPlot::PPGnuPlot(): pstyle("points"), my_handle(init()){
 PPGnuPlot::~PPGnuPlot(){
     finish(my_handle);
 }
+
+template<class type> inline void PPGnuPlot::operator()(type data, std::string title)
+{
+    ctrl    *   handle = my_handle;
+    size_t i ;
+	int		tmpfd ;
+    char    name[128] ;
+    char    cmd[GP_CMD_SIZE] ;
+    char    line[GP_CMD_SIZE] ;
+
+
+	if (handle==NULL || (data.size() < 1)) return ;
+
+    /* Open one more temporary file? */
+    if (handle->ntmp == GP_MAX_TMP_FILES - 1) {
+        fprintf(stderr,
+                "maximum # of temporary files reached (%d): cannot open more",
+                GP_MAX_TMP_FILES) ;
+        return ;
+    }
+
+    /* Open temporary file for output   */
+	sprintf(name, "%s/gnuplot-i-XXXXXX", P_tmpdir);
+    if ((tmpfd = mkstemp(name)) == -1) {
+        fprintf(stderr,"cannot create temporary file: exiting plot") ;
+        return ;
+    }
+
+    /* Store file name in array for future deletion */
+    strcpy(handle->to_delete[handle->ntmp], name) ;
+    handle->ntmp ++ ;
+    /* Write data to this file  */
+    for (i=0 ; i < data.size(); i++) {
+		sprintf(line, "%g\n", data[i]);
+		write(tmpfd, line, strlen(line));
+    }
+    close(tmpfd) ;
+
+    /* Command to be sent to gnuplot    */
+    if (handle->nplots > 0) {
+        strcpy(cmd, "replot") ;
+    } else {
+        strcpy(cmd, "plot") ;
+    }
+    
+    if (title == "") {
+        sprintf(line, "%s \"%s\" with %s", cmd, name, pstyle.c_str()) ;
+    } else {
+        sprintf(line, "%s \"%s\" title \"%s\" with %s", cmd, name,
+                      title.c_str(), pstyle.c_str()) ;
+    }
+
+    /* send command to gnuplot  */
+    Command(line) ;
+    handle->nplots++ ;
+    return ;
+}
+
+
+
 /*-------------------------------------------------------------------------*/
 /**
   @brief	Find out where a command lives in your PATH.
@@ -362,98 +413,6 @@ void PPGnuPlot::resetplot()
 
 
 
-/*-------------------------------------------------------------------------*/
-/**
-  @brief	Plots a 2d graph from a list of doubles.
-  @param	handle	Gnuplot session control handle.
-  @param	d		Array of doubles.
-  @param	n		Number of values in the passed array.
-  @param	title	Title of the plot.
-  @return	void
-
-  Plots out a 2d graph from a list of doubles. The x-coordinate is the
-  index of the double in the list, the y coordinate is the double in
-  the list.
-
-  Example:
-
-  @code
-    ctrl    *h ;
-    double          d[50] ;
-    int             i ;
-
-    h = init() ;
-    for (i=0 ; i<50 ; i++) {
-        d[i] = (double)(i*i) ;
-    }
-    plot_x(h, d, 50, "parabola") ;
-    sleep(2) ;
-    finish(h) ;
-  @endcode
- */
-/*--------------------------------------------------------------------------*/
-
-void PPGnuPlot::plot_x(
-    double          *   d,
-    int                 n,
-    char            *   title
-)
-{
-    ctrl    *   handle = my_handle;
-    int     i ;
-	int		tmpfd ;
-    char    name[128] ;
-    char    cmd[GP_CMD_SIZE] ;
-    char    line[GP_CMD_SIZE] ;
-
-
-	if (handle==NULL || d==NULL || (n<1)) return ;
-
-    /* Open one more temporary file? */
-    if (handle->ntmp == GP_MAX_TMP_FILES - 1) {
-        fprintf(stderr,
-                "maximum # of temporary files reached (%d): cannot open more",
-                GP_MAX_TMP_FILES) ;
-        return ;
-    }
-
-    /* Open temporary file for output   */
-	sprintf(name, "%s/gnuplot-i-XXXXXX", P_tmpdir);
-    if ((tmpfd=mkstemp(name))==-1) {
-        fprintf(stderr,"cannot create temporary file: exiting plot") ;
-        return ;
-    }
-
-    /* Store file name in array for future deletion */
-    strcpy(handle->to_delete[handle->ntmp], name) ;
-    handle->ntmp ++ ;
-    /* Write data to this file  */
-    for (i=0 ; i<n ; i++) {
-		sprintf(line, "%g\n", d[i]);
-		write(tmpfd, line, strlen(line));
-    }
-    close(tmpfd) ;
-
-    /* Command to be sent to gnuplot    */
-    if (handle->nplots > 0) {
-        strcpy(cmd, "replot") ;
-    } else {
-        strcpy(cmd, "plot") ;
-    }
-    
-    if (title == NULL) {
-        sprintf(line, "%s \"%s\" with %s", cmd, name, pstyle.c_str()) ;
-    } else {
-        sprintf(line, "%s \"%s\" title \"%s\" with %s", cmd, name,
-                      title, pstyle.c_str()) ;
-    }
-
-    /* send command to gnuplot  */
-    Command(line) ;
-    handle->nplots++ ;
-    return ;
-}
-
 
 
 /*-------------------------------------------------------------------------*/
@@ -603,7 +562,7 @@ void PPGnuPlot::plot_once(
 		set_ylabel("Y");
 	}
 	if (y==NULL) {
-		plot_x(x, n, title);
+		//plot_x(x, n, title);
 	} else {
 		plot_xy(x, y, n, title);
 	}
@@ -727,6 +686,7 @@ void PPGnuPlot::Equation(
 }
 
 void PPGnuPlot::Wait(){
+    std::cout << "Press Enter to continue...";
     char enter;
     do {
         std::cin.get(enter);

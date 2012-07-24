@@ -3,6 +3,7 @@
 
 #include <string>
 #include <iostream>
+#include <vector>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,12 +12,10 @@
 #include <stdarg.h>
 
 
-/** Maximal number of simultaneous temporary files */
-#define GP_MAX_TMP_FILES    64
-/** Maximal size of a temporary file name */
-#define GP_TMP_NAME_SIZE    512
 
 
+enum{GP_MAX_TMP_FILES = 64, GP_TMP_NAME_SIZE = 512, GP_CMD_SIZE = 2048, GP_TITLE_SIZE = 80, GP_EQ_SIZE = 512, PATH_MAXNAMESZ = 4096};
+/** Define P_tmpdir if not defined (this is normally a POSIX symbol) */
 typedef struct _CTRL_ {
     /** Pipe to gnuplot process */
     FILE    * gnucmd ;
@@ -31,6 +30,7 @@ typedef struct _CTRL_ {
     int       ntmp ;
 } ctrl ;
 
+
 /********************* base class for PPGnuPlot*************************/
 class PPGnuPlot{
     public:
@@ -41,7 +41,7 @@ class PPGnuPlot{
         void set_xlabel(const  char * label);
         void set_ylabel(const char * label);
         void resetplot();
-        void plot_x(double * d, int n, char * title);
+        template <class type> void operator()(type data, std::string title);
         void plot_xy(
                 double * x,
                 double * y,
@@ -65,6 +65,7 @@ class PPGnuPlot{
         void Equation(char * equation, char * title) ;
         void Wait();
     private:
+
         std::string pstyle;
         ctrl* my_handle;
 
@@ -72,9 +73,10 @@ class PPGnuPlot{
         ctrl * init(void);
         void finish(ctrl * handle);
         void Command(const char *  cmd, ...);
+
 };
 
 
-
+#include "ppgnuplot.cpp"
 
 #endif

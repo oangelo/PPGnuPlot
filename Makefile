@@ -4,7 +4,7 @@
 CC=g++
 CFLAGS=-c -Wall -std=c++0x  
 LDFLAGS=-lgtest -lgsl -lgslcblas -lm -lpthread
-SOURCES= unit_test/tests.cpp src/ppgnuplot.cpp
+SOURCES= unit_test/tests.cpp 
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=tests
 
