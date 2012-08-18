@@ -5,13 +5,15 @@
 TEST(PPGnuPlot, Equation){
  PPGnuPlot plot;
  plot.Equation("sin(x)", "Sin(x)");
- //plot.Wait();
+ plot.Wait();
 } 
 
 TEST(PPGnuPlot, Vector){
  PPGnuPlot plot;
  std::vector<double> vec({6, 5, 4, 3, 2, 1});
- plot(vec, "Sin(x)");
+ plot.SetXLabel("x label test");
+ plot.SetYLabel("y label test");
+ plot(vec, "Vector");
  plot.Wait();
 }
 

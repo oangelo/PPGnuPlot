@@ -42,17 +42,17 @@
                             Function codes
  ---------------------------------------------------------------------------*/
 
-PPGnuPlot::PPGnuPlot(): pstyle("points"), my_handle(init()){
+PPGnuPlot::PPGnuPlot(): pstyle("points") {
+    init();
        
 }
 
 PPGnuPlot::~PPGnuPlot(){
-    finish(my_handle);
+    finish();
 }
 
 template<class type> inline void PPGnuPlot::operator()(type data, std::string title)
 {
-    ctrl    *   handle = my_handle;
     size_t i ;
 	int		tmpfd ;
     char    name[128] ;
@@ -60,10 +60,8 @@ template<class type> inline void PPGnuPlot::operator()(type data, std::string ti
     char    line[GP_CMD_SIZE] ;
 
 
-	if (handle==NULL || (data.size() < 1)) return ;
-
     /* Open one more temporary file? */
-    if (handle->ntmp == GP_MAX_TMP_FILES - 1) {
+    if (ntmp == GP_MAX_TMP_FILES - 1) {
         fprintf(stderr,
                 "maximum # of temporary files reached (%d): cannot open more",
                 GP_MAX_TMP_FILES) ;
@@ -78,8 +76,8 @@ template<class type> inline void PPGnuPlot::operator()(type data, std::string ti
     }
 
     /* Store file name in array for future deletion */
-    strcpy(handle->to_delete[handle->ntmp], name) ;
-    handle->ntmp ++ ;
+    strcpy(to_delete[ntmp], name) ;
+    ntmp ++ ;
     /* Write data to this file  */
     for (i=0 ; i < data.size(); i++) {
 		sprintf(line, "%g\n", data[i]);
@@ -88,7 +86,7 @@ template<class type> inline void PPGnuPlot::operator()(type data, std::string ti
     close(tmpfd) ;
 
     /* Command to be sent to gnuplot    */
-    if (handle->nplots > 0) {
+    if (nplots > 0) {
         strcpy(cmd, "replot") ;
     } else {
         strcpy(cmd, "plot") ;
@@ -103,7 +101,7 @@ template<class type> inline void PPGnuPlot::operator()(type data, std::string ti
 
     /* send command to gnuplot  */
     Command(line) ;
-    handle->nplots++ ;
+    nplots++ ;
     return ;
 }
 
@@ -199,32 +197,28 @@ char * PPGnuPlot::get_program_path(const char * pname)
  */
 /*--------------------------------------------------------------------------*/
 
-ctrl * PPGnuPlot::init(void){
-    ctrl*  handle = NULL;
+void PPGnuPlot::init(void){
 
     if (getenv("DISPLAY") == NULL) {
         fprintf(stderr, "cannot find DISPLAY variable: is it set?\n") ;
     }
 	if (get_program_path("gnuplot")==NULL) {
 		fprintf(stderr, "cannot find gnuplot in your PATH");
-		return NULL ;
+        //TODO trow exception
 	}
 
     /* 
      * Structure initialization:
      */
-    handle = new ctrl;
-    handle->nplots = 0 ;
-    handle->ntmp = 0 ;
-    //setstyle("points");
+    nplots = 0 ;
+    ntmp = 0 ;
+    //SetStyle("points");
 
-    handle->gnucmd = popen("gnuplot", "w") ;
-    if (handle->gnucmd == NULL) {
+    gnucmd = popen("gnuplot", "w") ;
+    if (gnucmd == NULL) {
         fprintf(stderr, "error starting gnuplot\n") ;
-        free(handle) ;
-        return NULL ;
+        //TODO trow exceptio!!!
     }
-    return handle;
 }
 
 
@@ -241,20 +235,19 @@ ctrl * PPGnuPlot::init(void){
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::finish(ctrl * handle)
+void PPGnuPlot::finish()
 {
     int     i ;
 	
-    if (pclose(handle->gnucmd) == -1) {
+    if (pclose(gnucmd) == -1) {
         fprintf(stderr, "problem closing communication to gnuplot\n") ;
         return ;
     }
-    if (handle->ntmp) {
-        for (i=0 ; i<handle->ntmp ; i++) {
-            remove(handle->to_delete[i]) ;
+    if (ntmp) {
+        for (i=0 ; i<ntmp ; i++) {
+            remove(to_delete[i]) ;
         }
     }
-    delete handle;
 }
 
 
@@ -285,7 +278,6 @@ void PPGnuPlot::finish(ctrl * handle)
 
 void PPGnuPlot::Command(const char *  cmd, ...)
 {   
-    ctrl * handle = my_handle;
     va_list ap ;
     char    local_cmd[GP_CMD_SIZE];
 
@@ -295,8 +287,8 @@ void PPGnuPlot::Command(const char *  cmd, ...)
 
     strcat(local_cmd, "\n");
 
-    fputs(local_cmd, handle->gnucmd) ;
-    fflush(handle->gnucmd) ;
+    fputs(local_cmd, gnucmd) ;
+    fflush(gnucmd) ;
     return ;
 }
 
@@ -323,7 +315,7 @@ void PPGnuPlot::Command(const char *  cmd, ...)
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::setstyle(std::string plot_style) 
+void PPGnuPlot::SetStyle(std::string plot_style) 
 {
     
     if ((plot_style != "lines") &&
@@ -355,12 +347,12 @@ void PPGnuPlot::setstyle(std::string plot_style)
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::set_xlabel(const char * label)
+void PPGnuPlot::SetXLabel(std::string label)
 {
     char    cmd[GP_CMD_SIZE] ;
 
-    sprintf(cmd, "set xlabel \"%s\"", label) ;
-    Command(cmd) ;
+    sprintf(cmd, "set xlabel \"%s\"", label.c_str());
+    Command(cmd);
     return ;
 }
 
@@ -376,11 +368,11 @@ void PPGnuPlot::set_xlabel(const char * label)
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::set_ylabel(const char * label)
+void PPGnuPlot::SetYLabel(std::string label)
 {
     char    cmd[GP_CMD_SIZE] ;
 
-    sprintf(cmd, "set ylabel \"%s\"", label) ;
+    sprintf(cmd, "set ylabel \"%s\"", label.c_str()) ;
     Command(cmd) ;
     return ;
 }
@@ -397,17 +389,16 @@ void PPGnuPlot::set_ylabel(const char * label)
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::resetplot()
+void PPGnuPlot::ResetPlot()
 {
-    ctrl * h = my_handle;
     int     i ;
-    if (h->ntmp) {
-        for (i=0 ; i<h->ntmp ; i++) {
-            remove(h->to_delete[i]) ;
+    if (ntmp) {
+        for (i=0 ; i<ntmp ; i++) {
+            remove(to_delete[i]) ;
         }
     }
-    h->ntmp = 0 ;
-    h->nplots = 0 ;
+    ntmp = 0 ;
+    nplots = 0 ;
     return ;
 }
 
@@ -447,24 +438,23 @@ void PPGnuPlot::resetplot()
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::plot_xy(
+void PPGnuPlot::PlotXY(
 	double			*	x,
 	double			*	y,
     int                 n,
     char            *   title
 )
 {
-    ctrl    *   handle = my_handle;
     int     i ;
 	int		tmpfd ;
     char    name[128] ;
     char    cmd[GP_CMD_SIZE] ;
     char    line[GP_CMD_SIZE] ;
 
-	if (handle==NULL || x==NULL || y==NULL || (n<1)) return ;
+	if ( x==NULL || y==NULL || (n<1)) return ;
 
     /* Open one more temporary file? */
-    if (handle->ntmp == GP_MAX_TMP_FILES - 1) {
+    if (ntmp == GP_MAX_TMP_FILES - 1) {
         fprintf(stderr,
                 "maximum # of temporary files reached (%d): cannot open more",
                 GP_MAX_TMP_FILES) ;
@@ -478,8 +468,8 @@ void PPGnuPlot::plot_xy(
         return ;
     }
     /* Store file name in array for future deletion */
-    strcpy(handle->to_delete[handle->ntmp], name) ;
-    handle->ntmp ++ ;
+    strcpy(to_delete[ntmp], name) ;
+    ntmp ++ ;
 
     /* Write data to this file  */
     for (i=0 ; i<n; i++) {
@@ -489,7 +479,7 @@ void PPGnuPlot::plot_xy(
     close(tmpfd) ;
 
     /* Command to be sent to gnuplot    */
-    if (handle->nplots > 0) {
+    if (nplots > 0) {
         strcpy(cmd, "replot") ;
     } else {
         strcpy(cmd, "plot") ;
@@ -504,7 +494,7 @@ void PPGnuPlot::plot_xy(
 
     /* send command to gnuplot  */
     Command(line) ;
-    handle->nplots++ ;
+    nplots++ ;
     return ;
 }
 
@@ -531,7 +521,7 @@ void PPGnuPlot::plot_xy(
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::plot_once(
+void PPGnuPlot::PlotOnce(
 	char	*	title,
 	char	*	style,
 	char	*	label_x,
@@ -541,34 +531,32 @@ void PPGnuPlot::plot_once(
 	int			n
 )
 {
-	ctrl	*	handle ;
 
 	if (x==NULL || n<1) return ;
 
-	if ((handle = init()) == NULL) return ;
 	if (style!=NULL) {
-		setstyle(style);
+		SetStyle(style);
 	} else {
-		setstyle("lines");
+		SetStyle("lines");
 	}
 	if (label_x!=NULL) {
-		set_xlabel(label_x);
+		SetXLabel(label_x);
 	} else {
-		set_xlabel("X");
+		SetXLabel("X");
 	}
 	if (label_y!=NULL) {
-		set_ylabel(label_y);
+		SetYLabel(label_y);
 	} else {
-		set_ylabel("Y");
+		SetYLabel("Y");
 	}
 	if (y==NULL) {
 		//plot_x(x, n, title);
 	} else {
-		plot_xy(x, y, n, title);
+		PlotXY(x, y, n, title);
 	}
 	printf("press ENTER to continue\n");
 	while (getchar()!='\n') {}
-	finish(handle);
+	finish();
 	return ;
 }
 
@@ -602,13 +590,12 @@ void PPGnuPlot::plot_once(
 /*--------------------------------------------------------------------------*/
     
 
-void PPGnuPlot::plot_slope(
+void PPGnuPlot::PlotSlope(
     double              a,
     double              b,
     char            *   title
 )
 {
-    ctrl    *   handle = my_handle;
     char    stitle[GP_TITLE_SIZE] ;
     char    cmd[GP_CMD_SIZE] ;
 
@@ -618,7 +605,7 @@ void PPGnuPlot::plot_slope(
         strcpy(stitle, title) ;
     }
 
-    if (handle->nplots > 0) {
+    if (nplots > 0) {
         sprintf(cmd, "replot %g * x + %g title \"%s\" with %s",
                       a, b, title, pstyle.c_str()) ;
     } else {
@@ -626,7 +613,7 @@ void PPGnuPlot::plot_slope(
                       a, b, title, pstyle.c_str()) ;
     }
     Command(cmd) ;
-    handle->nplots++ ;
+    nplots++ ;
     return ;
 }
 
@@ -657,30 +644,29 @@ void PPGnuPlot::plot_slope(
 /*--------------------------------------------------------------------------*/
 
 void PPGnuPlot::Equation(
-    char            *   equation,
-    char            *   title
+    std::string equation,
+    std::string title
 )
 {
-    ctrl    *   h = my_handle;
     char    cmd[GP_CMD_SIZE];
     char    plot_str[GP_EQ_SIZE] ;
     char    title_str[GP_TITLE_SIZE] ;
 
-    if (title == NULL) {
+    if (title == "") {
         strcpy(title_str, "no title") ;
     } else {
-        strcpy(title_str, title) ;
+        strcpy(title_str, title.c_str()) ;
     }
-    if (h->nplots > 0) {
+    if (nplots > 0) {
         strcpy(plot_str, "replot") ;
     } else {
         strcpy(plot_str, "plot") ;
     }
 
     sprintf(cmd, "%s %s title \"%s\" with %s", 
-                  plot_str, equation, title_str, pstyle.c_str()) ;
+                  plot_str, equation.c_str(), title_str, pstyle.c_str()) ;
     Command(cmd) ;
-    h->nplots++ ;
+    nplots++ ;
 
 
 }

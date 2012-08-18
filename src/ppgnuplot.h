@@ -11,44 +11,24 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-
-
-
-enum{GP_MAX_TMP_FILES = 64, GP_TMP_NAME_SIZE = 512, GP_CMD_SIZE = 2048, GP_TITLE_SIZE = 80, GP_EQ_SIZE = 512, PATH_MAXNAMESZ = 4096};
-/** Define P_tmpdir if not defined (this is normally a POSIX symbol) */
-typedef struct _CTRL_ {
-    /** Pipe to gnuplot process */
-    FILE    * gnucmd ;
-
-    /** Number of currently active plots */
-    int       nplots ;
-    /** Current plotting style */
-
-    /** Name of temporary files */
-    char      to_delete[GP_MAX_TMP_FILES][GP_TMP_NAME_SIZE] ;
-    /** Number of temporary files */
-    int       ntmp ;
-} ctrl ;
-
-
-/********************* base class for PPGnuPlot*************************/
 class PPGnuPlot{
     public:
         PPGnuPlot();
         ~PPGnuPlot();
 
-        void setstyle(std::string plot_style);
-        void set_xlabel(const  char * label);
-        void set_ylabel(const char * label);
-        void resetplot();
-        template <class type> void operator()(type data, std::string title);
-        void plot_xy(
+        template <class type> void operator()(type data, std::string title = "");
+
+        void SetStyle(std::string plot_style);
+        void SetXLabel(std::string label);
+        void SetYLabel(std::string label);
+        void ResetPlot();
+        void PlotXY(
                 double * x,
                 double * y,
                 int n,
                 char * title
                 ) ;
-        void plot_once(
+        void PlotOnce(
                 char    *   title,
                 char    *   style,
                 char    *   label_x,
@@ -57,23 +37,35 @@ class PPGnuPlot{
                 double  *   y,
                 int         n
                 );
-        void plot_slope(
+        void PlotSlope(
                 double              a,
                 double              b,
                 char            *   title
                 ) ;
-        void Equation(char * equation, char * title) ;
+        void Equation(std::string equation, std::string title) ;
         void Wait();
     private:
+        enum{GP_MAX_TMP_FILES = 64, GP_TMP_NAME_SIZE = 512, GP_CMD_SIZE = 2048, 
+             GP_TITLE_SIZE = 80, GP_EQ_SIZE = 512, PATH_MAXNAMESZ = 4096};
 
         std::string pstyle;
-        ctrl* my_handle;
 
+         /** Pipe to gnuplot process */
+        FILE    * gnucmd ;
+
+        /** Number of currently active plots */
+        int       nplots ;
+        /** Current plotting style */
+
+        /** Name of temporary files */
+        char      to_delete[GP_MAX_TMP_FILES][GP_TMP_NAME_SIZE] ;
+        /** Number of temporary files */
+        int       ntmp ;
+       
         char * get_program_path(const char * pname);
-        ctrl * init(void);
-        void finish(ctrl * handle);
+        void init(void);
+        void finish();
         void Command(const char *  cmd, ...);
-
 };
 
 
