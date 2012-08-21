@@ -51,7 +51,13 @@ PPGnuPlot::~PPGnuPlot(){
     finish();
 }
 
-template<class type> inline void PPGnuPlot::operator()(type data, std::string title)
+template<class type> inline void PPGnuPlot::operator()(type data, std::string title) {
+    //TODO Generate a function that can identify the data type, in order to cal
+    //Single or Pairs function.
+    //Probabily will need to use SFINAE idiom.
+}
+
+template<class type> inline void PPGnuPlot::Single(type data, std::string title)
 {
     size_t i ;
 	int		tmpfd ;
@@ -136,14 +142,14 @@ template<class type> inline void PPGnuPlot::operator()(type data, std::string ti
   
  */
 /*-------------------------------------------------------------------------*/
-char * PPGnuPlot::get_program_path(const char * pname)
+std::string PPGnuPlot::get_program_path(std::string pname)
 {
     int         i, j, lg;
     char    *   path;
     static char buf[PATH_MAXNAMESZ];
 
     /* Trivial case: try in CWD */
-    sprintf(buf, "./%s", pname) ;
+    sprintf(buf, "./%s", pname.c_str()) ;
     if (access(buf, X_OK)==0) {
         sprintf(buf, ".");
         return buf ;
@@ -158,7 +164,7 @@ char * PPGnuPlot::get_program_path(const char * pname)
             strncpy(buf, path + i, lg);
             if (lg == 0) buf[lg++] = '.';
             buf[lg++] = '/';
-            strcpy(buf + lg, pname);
+            strcpy(buf + lg, pname.c_str());
             if (access(buf, X_OK) == 0) {
                 /* Found it! */
                 break ;
@@ -202,7 +208,7 @@ void PPGnuPlot::init(void){
     if (getenv("DISPLAY") == NULL) {
         fprintf(stderr, "cannot find DISPLAY variable: is it set?\n") ;
     }
-	if (get_program_path("gnuplot")==NULL) {
+	if (get_program_path("gnuplot") == "") {
 		fprintf(stderr, "cannot find gnuplot in your PATH");
         //TODO trow exception
 	}
@@ -276,13 +282,13 @@ void PPGnuPlot::finish()
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::Command(const char *  cmd, ...)
+void PPGnuPlot::Command(std::string  cmd, ...)
 {   
-    va_list ap ;
+    va_list ap;
     char    local_cmd[GP_CMD_SIZE];
 
     va_start(ap, cmd);
-    vsprintf(local_cmd, cmd, ap);
+    vsprintf(local_cmd, cmd.c_str(), ap);
     va_end(ap);
 
     strcat(local_cmd, "\n");
@@ -438,20 +444,18 @@ void PPGnuPlot::ResetPlot()
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::PlotXY(
-	double			*	x,
-	double			*	y,
-    int                 n,
-    char            *   title
+template <class type>
+void PPGnuPlot::Pairs(
+    type data,
+    std::string title
 )
 {
-    int     i ;
 	int		tmpfd ;
     char    name[128] ;
     char    cmd[GP_CMD_SIZE] ;
     char    line[GP_CMD_SIZE] ;
 
-	if ( x==NULL || y==NULL || (n<1)) return ;
+	if (data.size() == 0) return ;
 
     /* Open one more temporary file? */
     if (ntmp == GP_MAX_TMP_FILES - 1) {
@@ -472,8 +476,8 @@ void PPGnuPlot::PlotXY(
     ntmp ++ ;
 
     /* Write data to this file  */
-    for (i=0 ; i<n; i++) {
-        sprintf(line, "%g %g\n", x[i], y[i]) ;
+    for (size_t i = 0; i < data.size(); i++) {
+        sprintf(line, "%g %g\n", data[i][0], data[i][1]) ;
 		write(tmpfd, line, strlen(line));
     }
     close(tmpfd) ;
@@ -485,11 +489,11 @@ void PPGnuPlot::PlotXY(
         strcpy(cmd, "plot") ;
     }
     
-    if (title == NULL) {
+    if (title == "") {
         sprintf(line, "%s \"%s\" with %s", cmd, name, pstyle.c_str());
     } else {
         sprintf(line, "%s \"%s\" title \"%s\" with %s", cmd, name,
-                      title, pstyle.c_str()) ;
+                      title.c_str(), pstyle.c_str()) ;
     }
 
     /* send command to gnuplot  */
@@ -498,150 +502,6 @@ void PPGnuPlot::PlotXY(
     return ;
 }
 
-
-
-/*-------------------------------------------------------------------------*/
-/**
-  @brief	Open a new session, plot a signal, close the session.
-  @param	title	Plot title
-  @param	style	Plot style
-  @param	label_x	Label for X
-  @param	label_y	Label for Y
-  @param	x		Array of X coordinates
-  @param	y		Array of Y coordinates (can be NULL)
-  @param	n		Number of values in x and y.
-  @return
-
-  This function opens a new gnuplot session, plots the provided
-  signal as an X or XY signal depending on a provided y, waits for
-  a carriage return on stdin and closes the session.
-
-  It is Ok to provide an empty title, empty style, or empty labels for
-  X and Y. Defaults are provided in this case.
- */
-/*--------------------------------------------------------------------------*/
-
-void PPGnuPlot::PlotOnce(
-	char	*	title,
-	char	*	style,
-	char	*	label_x,
-	char	*	label_y,
-	double	*	x,
-	double	*	y,
-	int			n
-)
-{
-
-	if (x==NULL || n<1) return ;
-
-	if (style!=NULL) {
-		SetStyle(style);
-	} else {
-		SetStyle("lines");
-	}
-	if (label_x!=NULL) {
-		SetXLabel(label_x);
-	} else {
-		SetXLabel("X");
-	}
-	if (label_y!=NULL) {
-		SetYLabel(label_y);
-	} else {
-		SetYLabel("Y");
-	}
-	if (y==NULL) {
-		//plot_x(x, n, title);
-	} else {
-		PlotXY(x, y, n, title);
-	}
-	printf("press ENTER to continue\n");
-	while (getchar()!='\n') {}
-	finish();
-	return ;
-}
-
-
-
-
-/*-------------------------------------------------------------------------*/
-/**
-  @brief	Plot a slope on a gnuplot session.
-  @param	handle		Gnuplot session control handle.
-  @param	a			Slope.
-  @param	b			Intercept.
-  @param	title		Title of the plot.
-  @return	void
-
-  Plot a slope on a gnuplot session. The provided slope has an
-  equation of the form y=ax+b
-
-  Example:
-
-  @code
-    ctrl    *   h ;
-    double              a, b ;
-
-    h = init() ;
-    plot_slope(h, 1.0, 0.0, "unity slope") ;
-    sleep(2) ;
-    finish(h) ;
-  @endcode
- */
-/*--------------------------------------------------------------------------*/
-    
-
-void PPGnuPlot::PlotSlope(
-    double              a,
-    double              b,
-    char            *   title
-)
-{
-    char    stitle[GP_TITLE_SIZE] ;
-    char    cmd[GP_CMD_SIZE] ;
-
-    if (title == NULL) {
-        strcpy(stitle, "no title") ;
-    } else {
-        strcpy(stitle, title) ;
-    }
-
-    if (nplots > 0) {
-        sprintf(cmd, "replot %g * x + %g title \"%s\" with %s",
-                      a, b, title, pstyle.c_str()) ;
-    } else {
-        sprintf(cmd, "plot %g * x + %g title \"%s\" with %s",
-                      a, b, title, pstyle.c_str()) ;
-    }
-    Command(cmd) ;
-    nplots++ ;
-    return ;
-}
-
-
-/*-------------------------------------------------------------------------*/
-/**
-  @brief	Plot a curve of given equation y=f(x).
-  @param	h			Gnuplot session control handle.
-  @param	equation	Equation to plot.
-  @param	title		Title of the plot.
-  @return	void
-
-  Plots out a curve of given equation. The general form of the
-  equation is y=f(x), you only provide the f(x) side of the equation.
-
-  Example:
-
-  @code
-        ctrl    *h ;
-        char            eq[80] ;
-
-        h = init() ;
-        strcpy(eq, "sin(x) * cos(2*x)") ;
-        plot_equation(h, eq, "sine wave", normal) ;
-        finish(h) ;
-  @endcode
- */
-/*--------------------------------------------------------------------------*/
 
 void PPGnuPlot::Equation(
     std::string equation,
@@ -672,7 +532,7 @@ void PPGnuPlot::Equation(
 }
 
 void PPGnuPlot::Wait(){
-    std::cout << "Press Enter to continue...";
+    std::cerr << "Press Enter to continue...";
     char enter;
     do {
         std::cin.get(enter);

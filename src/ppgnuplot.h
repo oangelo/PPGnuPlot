@@ -1,17 +1,18 @@
-#ifndef _PP
-#define _PP
+#ifndef _PPGnuPlot_
+#define _PPGnuPlot_
 
 #include <string>
 #include <iostream>
 #include <vector>
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstdarg>
 #include <unistd.h>
-#include <stdarg.h>
+
 
 class PPGnuPlot{
+    
     public:
         PPGnuPlot();
         ~PPGnuPlot();
@@ -22,28 +23,11 @@ class PPGnuPlot{
         void SetXLabel(std::string label);
         void SetYLabel(std::string label);
         void ResetPlot();
-        void PlotXY(
-                double * x,
-                double * y,
-                int n,
-                char * title
-                ) ;
-        void PlotOnce(
-                char    *   title,
-                char    *   style,
-                char    *   label_x,
-                char    *   label_y,
-                double  *   x,
-                double  *   y,
-                int         n
-                );
-        void PlotSlope(
-                double              a,
-                double              b,
-                char            *   title
-                ) ;
-        void Equation(std::string equation, std::string title) ;
+        template <class type> void Single(type data, std::string title = "");
+        template <class type> void Pairs(type data, std::string title = "") ;
+        void Equation(std::string equation, std::string title = "") ;
         void Wait();
+        
     private:
         enum{GP_MAX_TMP_FILES = 64, GP_TMP_NAME_SIZE = 512, GP_CMD_SIZE = 2048, 
              GP_TITLE_SIZE = 80, GP_EQ_SIZE = 512, PATH_MAXNAMESZ = 4096};
@@ -62,12 +46,11 @@ class PPGnuPlot{
         /** Number of temporary files */
         int       ntmp ;
        
-        char * get_program_path(const char * pname);
+        std::string get_program_path(std::string pname);
         void init(void);
         void finish();
-        void Command(const char *  cmd, ...);
+        void Command(std::string  cmd, ...);
 };
-
 
 #include "ppgnuplot.cpp"
 
