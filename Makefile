@@ -3,7 +3,7 @@
 
 CC=g++
 CFLAGS=-c -Wall -std=c++0x  
-LDFLAGS=-lgtest -lgsl -lgslcblas -lm -lpthread
+LDFLAGS=-lgtest
 SOURCES= unit_test/tests.cpp 
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=tests

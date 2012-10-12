@@ -27,7 +27,7 @@
                                 Includes
  ---------------------------------------------------------------------------*/
 
-#include "ppgnuplot.h"
+//#include "ppgnuplot.h"
 #ifndef P_tmpdir
 #define P_tmpdir "."
 
@@ -35,6 +35,15 @@
 /*---------------------------------------------------------------------------
                                 Defines
  ---------------------------------------------------------------------------*/
+#include <string>
+#include <iostream>
+#include <vector>
+
+#include <cstdio>
+#include <cstdlib>
+#include <cstdarg>
+#include <unistd.h>
+
 
 #endif
 
@@ -57,7 +66,7 @@ template<class type> inline void PPGnuPlot::operator()(type data, std::string ti
     //Probabily will need to use SFINAE idiom.
 }
 
-template<class type> inline void PPGnuPlot::Single(type data, std::string title)
+template<class type> inline void PPGnuPlot::Single(const type & data, std::string title)
 {
     size_t i ;
 	int		tmpfd ;
@@ -67,7 +76,7 @@ template<class type> inline void PPGnuPlot::Single(type data, std::string title)
 
 
     /* Open one more temporary file? */
-    if (ntmp == GP_MAX_TMP_FILES - 1) {
+    if (to_delete.size() == GP_MAX_TMP_FILES - 1) {
         fprintf(stderr,
                 "maximum # of temporary files reached (%d): cannot open more",
                 GP_MAX_TMP_FILES) ;
@@ -82,8 +91,8 @@ template<class type> inline void PPGnuPlot::Single(type data, std::string title)
     }
 
     /* Store file name in array for future deletion */
-    strcpy(to_delete[ntmp], name) ;
-    ntmp ++ ;
+    to_delete.push_back(name);
+    
     /* Write data to this file  */
     for (i=0 ; i < data.size(); i++) {
 		sprintf(line, "%g\n", data[i]);
@@ -217,7 +226,6 @@ void PPGnuPlot::init(void){
      * Structure initialization:
      */
     nplots = 0 ;
-    ntmp = 0 ;
     //SetStyle("points");
 
     gnucmd = popen("gnuplot", "w") ;
@@ -243,16 +251,16 @@ void PPGnuPlot::init(void){
 
 void PPGnuPlot::finish()
 {
-    int     i ;
 	
     if (pclose(gnucmd) == -1) {
         fprintf(stderr, "problem closing communication to gnuplot\n") ;
         return ;
     }
-    if (ntmp) {
-        for (i=0 ; i<ntmp ; i++) {
-            remove(to_delete[i]) ;
-        }
+    for (auto iten: to_delete) {
+        remove(iten.c_str()) ;
+    }
+    for (auto iten: to_delete_aux) {
+        remove(iten.c_str()) ;
     }
 }
 
@@ -397,15 +405,9 @@ void PPGnuPlot::SetYLabel(std::string label)
 
 void PPGnuPlot::ResetPlot()
 {
-    int     i ;
-    if (ntmp) {
-        for (i=0 ; i<ntmp ; i++) {
-            remove(to_delete[i]) ;
-        }
-    }
-    ntmp = 0 ;
-    nplots = 0 ;
-    return ;
+    to_delete_aux.insert(to_delete_aux.end(), to_delete.begin(), to_delete.end());
+    to_delete.erase(to_delete.begin(), to_delete.end());
+    nplots = 0;
 }
 
 
@@ -446,19 +448,19 @@ void PPGnuPlot::ResetPlot()
 
 template <class type>
 void PPGnuPlot::Pairs(
-    type data,
+    const type & data,
     std::string title
 )
 {
-	int		tmpfd ;
-    char    name[128] ;
-    char    cmd[GP_CMD_SIZE] ;
-    char    line[GP_CMD_SIZE] ;
+	int		tmpfd;
+    char    name[128];
+    char    cmd[GP_CMD_SIZE];
+    char    line[GP_CMD_SIZE];
 
 	if (data.size() == 0) return ;
 
     /* Open one more temporary file? */
-    if (ntmp == GP_MAX_TMP_FILES - 1) {
+    if (to_delete.size() == GP_MAX_TMP_FILES - 1) {
         fprintf(stderr,
                 "maximum # of temporary files reached (%d): cannot open more",
                 GP_MAX_TMP_FILES) ;
@@ -467,17 +469,18 @@ void PPGnuPlot::Pairs(
 
     /* Open temporary file for output   */
 	sprintf(name, "%s/gnuplot-i-XXXXXX", P_tmpdir);
-    if ((tmpfd=mkstemp(name))==-1) {
+    if ((tmpfd = mkstemp(name)) == -1) {
         fprintf(stderr,"cannot create temporary file: exiting plot") ;
         return ;
     }
     /* Store file name in array for future deletion */
-    strcpy(to_delete[ntmp], name) ;
-    ntmp ++ ;
+    to_delete.push_back(name);
 
     /* Write data to this file  */
     for (size_t i = 0; i < data.size(); i++) {
-        sprintf(line, "%g %g\n", data[i][0], data[i][1]) ;
+        double x = data[i][0]; 
+        double y = data[i][1];
+        sprintf(line, "%g %g\n", x, y) ;
 		write(tmpfd, line, strlen(line));
     }
     close(tmpfd) ;
@@ -490,7 +493,7 @@ void PPGnuPlot::Pairs(
     }
     
     if (title == "") {
-        sprintf(line, "%s \"%s\" with %s", cmd, name, pstyle.c_str());
+        sprintf(line, "%s \"%s\" with %s notitle", cmd, name, pstyle.c_str());
     } else {
         sprintf(line, "%s \"%s\" title \"%s\" with %s", cmd, name,
                       title.c_str(), pstyle.c_str()) ;
@@ -537,5 +540,10 @@ void PPGnuPlot::Wait(){
     do {
         std::cin.get(enter);
     } while ( enter != '\n' );
+}
+
+void PPGnuPlot::Wait(double time){
+    std::cerr << "Let's wait " << time << " seconds..." << std::endl;
+    usleep(1000*time);
 }
 
