@@ -403,7 +403,7 @@ void PPGnuPlot::SetYLabel(std::string label)
  */
 /*--------------------------------------------------------------------------*/
 
-void PPGnuPlot::ResetPlot()
+void PPGnuPlot::Reset()
 {
     to_delete_aux.insert(to_delete_aux.end(), to_delete.begin(), to_delete.end());
     to_delete.erase(to_delete.begin(), to_delete.end());

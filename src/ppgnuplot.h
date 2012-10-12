@@ -23,7 +23,7 @@ class PPGnuPlot{
         void SetStyle(std::string plot_style);
         void SetXLabel(std::string label);
         void SetYLabel(std::string label);
-        void ResetPlot();
+        void Reset();
         template <class type> 
             void Single(const type & data, std::string title = "");
         template <class type> 
