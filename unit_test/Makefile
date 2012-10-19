@@ -4,7 +4,7 @@
 CC=g++
 CFLAGS=-c -Wall -std=c++0x  
 LDFLAGS=-lgtest
-SOURCES= unit_test/tests.cpp 
+SOURCES= tests.cpp 
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=tests
 

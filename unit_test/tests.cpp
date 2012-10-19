@@ -1,5 +1,5 @@
 #include "gtest/gtest.h"
-#include "../src/ppgnuplot.h"
+#include "../ppgnuplot.h"
 #include <vector>
 
 TEST(PPGnuPlot, Equation){
@@ -39,7 +39,7 @@ TEST(PPGnuPlot, movie){
  {
      vec.push_back({i,i});
      plot.Pairs(vec);
-     plot.ResetPlot();
+     plot.Reset();
  }
 }
 
