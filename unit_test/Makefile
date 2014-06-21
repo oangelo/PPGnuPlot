@@ -3,7 +3,7 @@
 
 CC=g++
 CFLAGS=-c -Wall -std=c++0x  
-LDFLAGS=-lgtest
+LDFLAGS=-lgtest -lppgnuplot
 SOURCES= tests.cpp 
 OBJECTS=$(SOURCES:.cpp=.o)
 EXECUTABLE=tests

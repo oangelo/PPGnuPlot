@@ -1,5 +1,5 @@
-#include "gtest/gtest.h"
-#include "../ppgnuplot.h"
+#include <gtest/gtest.h>
+#include <ppgnuplot.h>
 #include <vector>
 
 TEST(PPGnuPlot, Equation){
