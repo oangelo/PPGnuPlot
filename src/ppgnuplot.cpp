@@ -32,10 +32,6 @@ PPGnuPlot::~PPGnuPlot(){
     finish();
 }
 
-
-
-
-
 /*-------------------------------------------------------------------------*/
 /**
   @brief	Find out where a command lives in your PATH.
@@ -111,8 +107,6 @@ std::string PPGnuPlot::get_program_path(std::string pname)
     return buf ;
 }
 
-
-
 /*-------------------------------------------------------------------------*/
 /**
   @brief	Opens up a gnuplot session, ready to receive commands.
@@ -165,7 +159,6 @@ void PPGnuPlot::init(void){
 
 void PPGnuPlot::finish()
 {
-	
     if (pclose(gnucmd) == -1) {
         fprintf(stderr, "problem closing communication to gnuplot\n") ;
         return ;
@@ -263,6 +256,10 @@ void PPGnuPlot::SetStyle(std::string plot_style)
     
 }
 
+void PPGnuPlot::SetPointType(unsigned type)
+{
+        pstyle = "points pt "+std::to_string(type);
+}
 
 /*-------------------------------------------------------------------------*/
 /**
@@ -305,6 +302,49 @@ void PPGnuPlot::SetYLabel(std::string label)
     return ;
 }
 
+void PPGnuPlot::SetXRange(double min, double max)
+{
+    char    cmd[GP_CMD_SIZE] ;
+
+    std::string s_min(std::to_string(min));
+    std::string s_max(std::to_string(max));
+    sprintf(cmd, "set xrange [%s:%s]", s_min.c_str(), s_max.c_str());
+    Command(cmd);
+    return ;
+}
+
+
+
+void PPGnuPlot::SetYRange(double min, double max)
+{
+    char    cmd[GP_CMD_SIZE] ;
+
+    std::string s_min(std::to_string(min));
+    std::string s_max(std::to_string(max));
+    sprintf(cmd, "set yrange [%s:%s]", s_min.c_str(), s_max.c_str());
+    Command(cmd);
+}
+
+void PPGnuPlot::SetLine(double x1, double y1, double x2, double y2)
+{
+    char    cmd[GP_CMD_SIZE] ;
+
+    std::string sx1(std::to_string(x1));
+    std::string sx2(std::to_string(x2));
+    std::string sy1(std::to_string(y1));
+    std::string sy2(std::to_string(y2));
+    sprintf(cmd, "set arrow nohead from %s,%s to %s,%s", sx1.c_str(), sy1.c_str(), sx2.c_str(), sy2.c_str());
+    Command(cmd);
+    return ;
+}
+
+void PPGnuPlot::SavePNG(std::string file_name){
+    char    cmd[GP_CMD_SIZE];
+    sprintf(cmd, "set term png");
+    Command(cmd);
+    sprintf(cmd, "set output \"%s\"", file_name.c_str());
+    Command(cmd);
+}
 
 /*-------------------------------------------------------------------------*/
 /**
@@ -323,10 +363,6 @@ void PPGnuPlot::Reset()
     to_delete.erase(to_delete.begin(), to_delete.end());
     nplots = 0;
 }
-
-
-
-
 
 /*-------------------------------------------------------------------------*/
 /**
@@ -360,9 +396,6 @@ void PPGnuPlot::Reset()
  */
 /*--------------------------------------------------------------------------*/
 
-
-
-
 void PPGnuPlot::Equation(
     std::string equation,
     std::string title
@@ -387,8 +420,6 @@ void PPGnuPlot::Equation(
                   plot_str, equation.c_str(), title_str, pstyle.c_str()) ;
     Command(cmd) ;
     nplots++ ;
-
-
 }
 
 void PPGnuPlot::Wait(){

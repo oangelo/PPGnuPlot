@@ -13,6 +13,7 @@ TEST(PPGnuPlot, Vector){
  std::vector<double> vec({6, 5, 4, 3, 2, 1});
  plot.SetXLabel("x label test");
  plot.SetYLabel("y label test");
+ plot.SavePNG("vec_test.png");
  plot.Single(vec, "Vector");
  //plot.Wait();
 }

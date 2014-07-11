@@ -23,12 +23,17 @@ class PPGnuPlot{
         void SetStyle(std::string plot_style);
         void SetXLabel(std::string label);
         void SetYLabel(std::string label);
+        void SetXRange(double min, double max);
+        void SetYRange(double min, double max);
+        void SetLine(double x1, double y1, double x2, double y2);
+        void SetPointType(unsigned type);
         void Reset();
         template <class type> 
             void Single(const type & data, std::string title = "");
         template <class type> 
             void Pairs(const type & data, std::string title = "") ;
         void Equation(std::string equation, std::string title = "") ;
+        void SavePNG(std::string file_name);
         void Wait();
         void Wait(double time);
         
