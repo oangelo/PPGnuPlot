@@ -23,9 +23,9 @@
                             Function codes
  ---------------------------------------------------------------------------*/
 
-PPGnuPlot::PPGnuPlot(): pstyle("points") {
+PPGnuPlot::PPGnuPlot()
+:pstyle("points"), gnucmd(), nplots(), to_delete(), to_delete_aux(){
     init();
-       
 }
 
 PPGnuPlot::~PPGnuPlot(){

@@ -38,17 +38,19 @@ class PPGnuPlot{
         void Wait(double time);
         
     private:
-        enum{GP_MAX_TMP_FILES = 64, GP_TMP_NAME_SIZE = 512, GP_CMD_SIZE = 2048, GP_TITLE_SIZE = 80, GP_EQ_SIZE = 512, PATH_MAXNAMESZ = 4096};
+        enum{GP_MAX_TMP_FILES = 64, GP_TMP_NAME_SIZE = 512, 
+             GP_CMD_SIZE = 2048, GP_TITLE_SIZE = 80, 
+             GP_EQ_SIZE = 512, PATH_MAXNAMESZ = 4096};
+
+        //do not let the class to be copyed
+        PPGnuPlot(const PPGnuPlot&);
+        PPGnuPlot& operator=(const PPGnuPlot&);
 
         std::string pstyle;
-
          /** Pipe to gnuplot process */
         FILE    * gnucmd ;
-
         /** Number of currently active plots */
         int       nplots ;
-        /** Current plotting style */
-
         /** Name of temporary files */
         std::vector<std::string> to_delete;
         //Do not remove files until the object is done
@@ -61,10 +63,22 @@ class PPGnuPlot{
         void Command(std::string  cmd, ...);
 };
 
-template<class type> inline void PPGnuPlot::operator()(type data, std::string title) {
-    //TODO Generate a function that can identify the data type, in order to cal
-    //Single or Pairs function.
-    //Probabily will need to use SFINAE idiom.
+template<class type> void PPGnuPlot::operator()(type data, std::string title){
+  std::cerr<< "Operator not implemented for this type" << std::endl;
+}
+
+template<> void PPGnuPlot::operator()<std::vector<double>>(std::vector<double> data, std::string title){
+  this->Single<std::vector<double>>(data, title);
+}
+
+template<> void PPGnuPlot::operator()<std::vector<std::vector<double>>>\
+(std::vector<std::vector<double>> data, std::string title){
+  this->Pairs<std::vector<std::vector<double>>>(data, title);
+}
+
+template<> void PPGnuPlot::operator()<std::vector<std::vector<unsigned>>>\
+(std::vector<std::vector<unsigned>> data, std::string title){
+  this->Pairs<std::vector<std::vector<unsigned>>>(data, title);
 }
 
 template<class type> inline void PPGnuPlot::Single(const type & data, std::string title)

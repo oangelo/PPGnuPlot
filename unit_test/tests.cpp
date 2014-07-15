@@ -13,9 +13,9 @@ TEST(PPGnuPlot, Vector){
  std::vector<double> vec({6, 5, 4, 3, 2, 1});
  plot.SetXLabel("x label test");
  plot.SetYLabel("y label test");
- plot.SavePNG("vec_test.png");
- plot.Single(vec, "Vector");
- //plot.Wait();
+// plot.SavePNG("vec_test.png");
+ plot(vec, "Vector");
+ plot.Wait();
 }
 
 TEST(PPGnuPlot, matrix){
@@ -27,19 +27,19 @@ TEST(PPGnuPlot, matrix){
  vec.push_back({4, 16});
  vec.push_back({5, 256});
  plot.SetStyle("boxes");
- plot.Pairs(vec, "Vector");
- //plot.Wait();
+ plot(vec, "Vector");
+ plot.Wait();
 }
 
 TEST(PPGnuPlot, movie){
  PPGnuPlot plot;
- std::vector<std::vector<size_t>> vec;
+ std::vector<std::vector<unsigned>> vec;
  vec.push_back({1, 1});
  vec.push_back({2, 2});
  for (size_t i = 0; i < 200; ++i)
  {
      vec.push_back({i,i});
-     plot.Pairs(vec);
+     plot(vec);
      plot.Reset();
  }
 }
