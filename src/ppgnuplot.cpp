@@ -199,18 +199,9 @@ void PPGnuPlot::finish()
 
 void PPGnuPlot::Command(std::string  cmd, ...)
 {   
-    va_list ap;
-    char    local_cmd[GP_CMD_SIZE];
-
-    va_start(ap, cmd);
-    vsprintf(local_cmd, cmd.c_str(), ap);
-    va_end(ap);
-
-    strcat(local_cmd, "\n");
-
-    fputs(local_cmd, gnucmd) ;
+    cmd += "\n";
+    fputs(cmd.c_str(), gnucmd) ;
     fflush(gnucmd) ;
-    return ;
 }
 
 
@@ -274,11 +265,7 @@ void PPGnuPlot::SetPointType(unsigned type)
 
 void PPGnuPlot::SetXLabel(std::string label)
 {
-    char    cmd[GP_CMD_SIZE] ;
-
-    sprintf(cmd, "set xlabel \"%s\"", label.c_str());
-    Command(cmd);
-    return ;
+    Command("set xlabel \"" + label + "\"");
 }
 
 
@@ -295,55 +282,37 @@ void PPGnuPlot::SetXLabel(std::string label)
 
 void PPGnuPlot::SetYLabel(std::string label)
 {
-    char    cmd[GP_CMD_SIZE] ;
-
-    sprintf(cmd, "set ylabel \"%s\"", label.c_str()) ;
-    Command(cmd) ;
-    return ;
+    Command("set ylabel \"" + label + "\"");
 }
 
 void PPGnuPlot::SetXRange(double min, double max)
 {
-    char    cmd[GP_CMD_SIZE] ;
-
     std::string s_min(std::to_string(min));
     std::string s_max(std::to_string(max));
-    sprintf(cmd, "set xrange [%s:%s]", s_min.c_str(), s_max.c_str());
-    Command(cmd);
-    return ;
+    Command("set xrange [" + s_min + ":" + s_max + "]");
 }
 
 
 
 void PPGnuPlot::SetYRange(double min, double max)
 {
-    char    cmd[GP_CMD_SIZE] ;
-
     std::string s_min(std::to_string(min));
     std::string s_max(std::to_string(max));
-    sprintf(cmd, "set yrange [%s:%s]", s_min.c_str(), s_max.c_str());
-    Command(cmd);
+    Command("set yrange [" + s_min + ":" + s_max + "]");
 }
 
 void PPGnuPlot::SetLine(double x1, double y1, double x2, double y2)
 {
-    char    cmd[GP_CMD_SIZE] ;
-
     std::string sx1(std::to_string(x1));
     std::string sx2(std::to_string(x2));
     std::string sy1(std::to_string(y1));
     std::string sy2(std::to_string(y2));
-    sprintf(cmd, "set arrow nohead from %s,%s to %s,%s", sx1.c_str(), sy1.c_str(), sx2.c_str(), sy2.c_str());
-    Command(cmd);
-    return ;
+    Command("set arrow nohead from " + sx1 + "," + sy1 + " to " + sx2 + "," + sy2);
 }
 
 void PPGnuPlot::SavePNG(std::string file_name){
-    char    cmd[GP_CMD_SIZE];
-    sprintf(cmd, "set term png");
-    Command(cmd);
-    sprintf(cmd, "set output \"%s\"", file_name.c_str());
-    Command(cmd);
+    Command("set term png");
+    Command("set output \"" + file_name + "\"");
 }
 
 /*-------------------------------------------------------------------------*/
@@ -401,24 +370,21 @@ void PPGnuPlot::Equation(
     std::string title
 )
 {
-    char    cmd[GP_CMD_SIZE];
-    char    plot_str[GP_EQ_SIZE] ;
-    char    title_str[GP_TITLE_SIZE] ;
-
+  std::string plot;
     if (title == "") {
-        strcpy(title_str, "no title") ;
-    } else {
-        strcpy(title_str, title.c_str()) ;
-    }
+        title = " no title ";
+    }else{
+      title = " title \"" + title + "\"";
+    } 
+
     if (nplots > 0) {
-        strcpy(plot_str, "replot") ;
+        plot = "replot ";
     } else {
-        strcpy(plot_str, "plot") ;
+        plot = "plot ";
     }
 
-    sprintf(cmd, "%s %s title \"%s\" with %s", 
-                  plot_str, equation.c_str(), title_str, pstyle.c_str()) ;
-    Command(cmd) ;
+    Command(plot + equation + title + " with " + pstyle);
+    std::cout << plot + equation + title + " with " + pstyle << std::endl; 
     nplots++ ;
 }
 

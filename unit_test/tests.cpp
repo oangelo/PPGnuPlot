@@ -5,7 +5,7 @@
 TEST(PPGnuPlot, Equation){
  PPGnuPlot plot;
  plot.Equation("sin(x)", "Sin(x)");
-// plot.Wait();
+ plot.Wait();
 } 
 
 TEST(PPGnuPlot, Vector){
